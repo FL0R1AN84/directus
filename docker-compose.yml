@@ -1,0 +1,63 @@
+name: directus
+services:
+  cache:
+    container_name: cache
+    image: redis:6
+    networks:
+      directus: null
+  database:
+    container_name: database
+    environment:
+      POSTGRES_DB: directus
+      POSTGRES_PASSWORD: directus
+      POSTGRES_USER: directus
+    image: postgis/postgis:13-master
+    platform: linux/amd64
+    networks:
+      directus: null
+    ports: 
+      - "5432:5432"
+    volumes:
+    - type: bind
+      source: /Users/$USER/Developer/directus/data/database
+      target: /var/lib/postgresql/data
+      bind:
+        create_host_path: true
+  directus:
+    container_name: directus
+    depends_on:
+      cache:
+        condition: service_started
+      database:
+        condition: service_started
+    environment:
+      ADMIN_EMAIL: your@mail.tld
+      ADMIN_PASSWORD: 'password'
+      CACHE_ENABLED: "true"
+      CACHE_REDIS: redis://cache:6379
+      CACHE_STORE: redis
+      DB_CLIENT: pg
+      DB_DATABASE: directus
+      DB_HOST: database
+      DB_PASSWORD: directus
+      DB_PORT: "5432"
+      DB_USER: directus
+      KEY: 255d861b-5ea1-5996-9aa3-922530ec40b1
+      SECRET: 6116487b-cda1-52c2-b5b5-c8022c45e263
+    image: directus/directus:latest
+    networks:
+      directus: null
+    ports:
+    - mode: ingress
+      target: 8055
+      published: "8055"
+      protocol: tcp
+    volumes:
+    - type: bind
+      source: /Users/$USER/Developer/directus/uploads
+      target: /directus/uploads
+      bind:
+        create_host_path: true
+networks:
+  directus:
+    name: directus_directus
